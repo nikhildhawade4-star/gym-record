@@ -65,7 +65,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const ownerUID = "YOUR_OWNER_UID";
+const ownerUID = "5Xz8BpjNWdbEP2LpeJv0JzOSzjx2";
 
 const $ = id => document.getElementById(id);
 
