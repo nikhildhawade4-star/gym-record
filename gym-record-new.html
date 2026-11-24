@@ -1,0 +1,442 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101810">
+<title>Gym Record</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101810;color:#fff;font-family:Arial,sans-serif}
+header{padding:20px;background:#19271c;border-bottom:2px solid #39d353}
+header h1{margin:0;color:#39d353}
+main{max-width:950px;margin:auto;padding:15px}
+.card{background:#1b281f;padding:16px;border-radius:12px;margin:12px 0}
+input,select{width:100%;padding:12px;margin:7px 0;background:#101810;color:white;border:1px solid #526b56;border-radius:7px}
+button{background:#39d353;color:#071009;border:0;padding:12px;border-radius:7px;font-weight:bold;margin:4px;cursor:pointer}
+.secondary{background:#354638;color:white}
+.danger{background:#a83232;color:white}
+.tabs{display:flex;flex-wrap:wrap;gap:4px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#25382a;padding:15px;border-radius:10px}
+.stat strong{display:block;color:#39d353;font-size:24px;margin-top:8px}
+.member{padding:14px 0;border-bottom:1px solid #405442}
+.small{font-size:13px;color:#b6c9b9}
+.green{color:#39d353}.red{color:#ff7777}
+.hidden{display:none!important}
+label{display:block;margin-top:10px;color:#b6c9b9;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+<h1 id="heading">GYM RECORD 💪</h1>
+<p>Take Control of Your Fitness Business</p>
+</header>
+
+<main>
+<section id="login" class="card">
+<h2>Owner Login</h2>
+<input id="email" type="email" placeholder="Owner email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<p id="loginMsg" class="red"></p>
+</section>
+
+<section id="app" class="hidden">
+<div class="card">
+<h2>Welcome, Owner!</h2>
+<div class="tabs">
+<button onclick="page('dashboard')">Dashboard</button>
+<button onclick="page('members')">Members</button>
+<button onclick="newMember()">+ Add Member</button>
+<button onclick="page('payments')">Payments</button>
+<button onclick="page('reports')">Reports</button>
+<button onclick="page('settings')">Settings</button>
+<button class="danger" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<section id="dashboard" class="page">
+<h2>Dashboard</h2>
+<div class="stats">
+<div class="stat">Total Members<strong id="total">0</strong></div>
+<div class="stat">Active Members<strong id="active">0</strong></div>
+<div class="stat">Expired Members<strong id="expired">0</strong></div>
+<div class="stat">Pending Fees<strong id="pending">₹0</strong></div>
+<div class="stat">Total Collection<strong id="collection">₹0</strong></div>
+<div class="stat">This Month<strong id="monthIncome">₹0</strong></div>
+</div>
+<div class="card">
+<h3>Expiring in next 7 days</h3>
+<div id="expiring">None</div>
+</div>
+</section>
+
+<section id="members" class="page hidden">
+<h2>Member Management</h2>
+<input id="search" placeholder="Search name or phone" oninput="renderMembers()">
+<div id="memberList"></div>
+</section>
+
+<section id="add" class="page hidden">
+<h2 id="formTitle">Add Member</h2>
+<label>Full Name</label>
+<input id="name" placeholder="Member name">
+<label>Phone Number (with country code)</label>
+<input id="phone" type="tel" placeholder="919876543210">
+<label>Membership Plan</label>
+<select id="plan" onchange="setExpiry()">
+<option>Monthly</option>
+<option>Quarterly</option>
+<option>Half-Yearly</option>
+<option>Yearly</option>
+<option>Custom</option>
+</select>
+<label>Total Membership Fee (₹)</label>
+<input id="fee" type="number" min="0">
+<label>Amount Paid Now (₹)</label>
+<input id="initialPaid" type="number" min="0" value="0">
+<label>Start Date</label>
+<input id="startDate" type="date" onchange="setExpiry()">
+<label>Expiry Date</label>
+<input id="expiryDate" type="date">
+<button onclick="saveMember()">Save Member</button>
+<button class="secondary" onclick="page('members')">Cancel</button>
+<p id="formMsg"></p>
+</section>
+
+<section id="payments" class="page hidden">
+<h2>Collect Payment</h2>
+<label>Member</label>
+<select id="paymentMember"></select>
+<label>Amount (₹)</label>
+<input id="paymentAmount" type="number" min="1">
+<label>Payment Method</label>
+<select id="paymentMethod">
+<option>Cash</option><option>UPI</option>
+<option>Bank Transfer</option><option>Card</option>
+</select>
+<label>Payment Date</label>
+<input id="paymentDate" type="date">
+<button onclick="savePayment()">Save Payment</button>
+<h3>Payment History</h3>
+<div id="paymentHistory"></div>
+</section>
+
+<section id="reports" class="page hidden">
+<h2>Income Reports</h2>
+<div class="card">
+<p>Total Collection: <strong id="reportTotal" class="green">₹0</strong></p>
+<p>This Month: <strong id="reportMonth" class="green">₹0</strong></p>
+<p>Pending Fees: <strong id="reportPending" class="red">₹0</strong></p>
+</div>
+<h3>Monthly Income</h3>
+<div id="monthlyReport"></div>
+</section>
+
+<section id="settings" class="page hidden">
+<h2>Gym Settings</h2>
+<label>Gym Name</label>
+<input id="gymName" placeholder="Gym Record">
+<label>Gym WhatsApp Number (with country code)</label>
+<input id="gymPhone" placeholder="919876543210">
+<button onclick="saveSettings()">Save Settings</button>
+</section>
+</section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+// ENTER YOUR EXISTING FIREBASE CONFIG VALUES
+const firebaseConfig = {
+ apiKey:"PASTE_EXISTING_API_KEY",
+ authDomain:"PASTE_EXISTING_AUTH_DOMAIN",
+ projectId:"gym-record",
+ storageBucket:"PASTE_EXISTING_STORAGE_BUCKET",
+ messagingSenderId:"PASTE_EXISTING_SENDER_ID",
+ appId:"PASTE_EXISTING_APP_ID"
+};
+
+// ENTER YOUR EXISTING OWNER UID
+const ownerUID="PASTE_EXISTING_OWNER_UID";
+
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+let members=[];
+let payments=[];
+let editingId=null;
+let currentUser=null;
+
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString("en-CA");
+const money=n=>"₹"+Number(n||0).toLocaleString("en-IN");
+
+function safe(s){
+ return String(s??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+function page(id){
+ document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+ $(id).classList.remove("hidden");
+ if(id==="dashboard")dashboard();
+ if(id==="members")renderMembers();
+ if(id==="payments")renderPayments();
+ if(id==="reports")reports();
+}
+
+function login(){
+ $("loginMsg").textContent="Signing in...";
+ auth.signInWithEmailAndPassword($("email").value.trim(),$("password").value)
+ .catch(e=>$("loginMsg").textContent=e.message);
+}
+function logout(){auth.signOut();}
+
+auth.onAuthStateChanged(async user=>{
+ if(user && user.uid===ownerUID){
+  currentUser=user;
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("paymentDate").value=today();
+  $("startDate").value=today();
+  $("gymName").value=localStorage.getItem("gymName")||"Gym Record";
+  $("gymPhone").value=localStorage.getItem("gymPhone")||"";
+  $("heading").textContent=$("gymName").value;
+  await loadData();
+ }else{
+  currentUser=null;
+  $("app").classList.add("hidden");
+  $("login").classList.remove("hidden");
+  if(user){
+   $("loginMsg").textContent="Unauthorized account.";
+   auth.signOut();
+  }
+ }
+});
+
+async function loadData(){
+ try{
+  const [m,p]=await Promise.all([
+   db.collection("members").get(),
+   db.collection("payments").get()
+  ]);
+  members=m.docs.map(d=>({id:d.id,...d.data()}));
+  payments=p.docs.map(d=>({id:d.id,...d.data()}));
+  dashboard();
+  renderMembers();
+  renderPayments();
+ }catch(e){alert("Database error: "+e.message);}
+}
+
+function isActive(m){return !!m.expiryDate && m.expiryDate>=today();}
+
+function dashboard(){
+ const active=members.filter(isActive).length;
+ const pending=members.reduce((s,m)=>s+Math.max(0,Number(m.fee||0)-Number(m.paid||0)),0);
+ const total=payments.reduce((s,p)=>s+Number(p.amount||0),0);
+ const month=payments.filter(p=>(p.date||"").startsWith(today().slice(0,7)))
+ .reduce((s,p)=>s+Number(p.amount||0),0);
+
+ $("total").textContent=members.length;
+ $("active").textContent=active;
+ $("expired").textContent=members.length-active;
+ $("pending").textContent=money(pending);
+ $("collection").textContent=money(total);
+ $("monthIncome").textContent=money(month);
+
+ const soon=members.filter(m=>m.expiryDate>=today() &&
+ m.expiryDate<=new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"));
+ $("expiring").innerHTML=soon.length?soon.map(m=>
+ `<p>${safe(m.name)} — ${safe(m.expiryDate)}</p>`).join(""):"No upcoming expiries";
+}
+
+function newMember(){
+ editingId=null;
+ $("formTitle").textContent="Add Member";
+ ["name","phone","fee","expiryDate"].forEach(id=>$(id).value="");
+ $("initialPaid").value=0;
+ $("plan").value="Monthly";
+ $("startDate").value=today();
+ $("formMsg").textContent="";
+ setExpiry();
+ page("add");
+}
+
+function setExpiry(){
+ const months={"Monthly":1,"Quarterly":3,"Half-Yearly":6,"Yearly":12};
+ const n=months[$("plan").value];
+ if(!n)return;
+ const d=new Date(($("startDate").value||today())+"T12:00:00");
+ d.setMonth(d.getMonth()+n);
+ d.setDate(d.getDate()-1);
+ $("expiryDate").value=d.toLocaleDateString("en-CA");
+}
+
+function editMember(id){
+ const m=members.find(x=>x.id===id);
+ if(!m)return;
+ editingId=id;
+ $("formTitle").textContent="Edit Member";
+ $("name").value=m.name||"";
+ $("phone").value=m.phone||"";
+ $("plan").value=m.plan||"Monthly";
+ $("fee").value=m.fee||0;
+ $("initialPaid").value=0;
+ $("startDate").value=m.startDate||today();
+ $("expiryDate").value=m.expiryDate||"";
+ $("formMsg").textContent="Existing payments will be preserved.";
+ page("add");
+}
+
+async function saveMember(){
+ if(!currentUser)return;
+ const name=$("name").value.trim();
+ const phone=$("phone").value.trim();
+ const fee=Number($("fee").value);
+ const paid=Number($("initialPaid").value||0);
+ const startDate=$("startDate").value;
+ const expiryDate=$("expiryDate").value;
+ if(!name||!phone||!startDate||!expiryDate||fee<0||paid<0||paid>fee){
+  $("formMsg").textContent="Please check all details and amounts.";
+  return;
+ }
+ const data={name,phone,plan:$("plan").value,fee,startDate,expiryDate};
+ try{
+  if(editingId){
+   await db.collection("members").doc(editingId).update(data);
+  }else{
+   data.paid=0;
+   data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+   const ref=await db.collection("members").add(data);
+   if(paid>0){
+    await addPayment(ref.id,name,paid,"Initial Payment",today());
+   }
+  }
+  await loadData();
+  page("members");
+  alert("Member saved successfully!");
+ }catch(e){$("formMsg").textContent=e.message;}
+}
+
+async function deleteMember(id){
+ if(!confirm("Delete this member and their payment history?"))return;
+ try{
+  const old=await db.collection("payments").where("memberId","==",id).get();
+  const batch=db.batch();
+  old.forEach(d=>batch.delete(d.ref));
+  batch.delete(db.collection("members").doc(id));
+  await batch.commit();
+  await loadData();
+ }catch(e){alert(e.message);}
+}
+
+function renderMembers(){
+ const q=($("search").value||"").toLowerCase();
+ const list=members.filter(m=>(m.name||"").toLowerCase().includes(q)||(m.phone||"").includes(q));
+ $("memberList").innerHTML=list.length?list.map(m=>{
+ const due=Math.max(0,Number(m.fee||0)-Number(m.paid||0));
+ return `<div class="member">
+ <h3>${safe(m.name)}</h3>
+ <p class="small">${safe(m.phone)} | ${safe(m.plan)}</p>
+ <p>${isActive(m)?'<span class="green">Active</span>':'<span class="red">Expired</span>'}</p>
+ <p class="small">Start: ${safe(m.startDate)} | Expiry: ${safe(m.expiryDate)}</p>
+ <p>Fee: ${money(m.fee)} | Paid: ${money(m.paid)} | Due: <b class="red">${money(due)}</b></p>
+ <button onclick="editMember('${m.id}')">Edit</button>
+ <button class="secondary" onclick="quickPayment('${m.id}')">Collect Fee</button>
+ <button class="secondary" onclick="remind('${m.id}')">WhatsApp</button>
+ <button class="danger" onclick="deleteMember('${m.id}')">Delete</button>
+ </div>`;
+ }).join(""):"No members found.";
+}
+
+function fillMemberSelect(){
+ $("paymentMember").innerHTML=members.map(m=>
+ `<option value="${m.id}">${safe(m.name)} — Due ${money(Number(m.fee||0)-Number(m.paid||0))}</option>`
+ ).join("");
+}
+
+function quickPayment(id){
+ page("payments");
+ $("paymentMember").value=id;
+}
+
+async function addPayment(id,name,amount,method,date){
+ await db.collection("payments").add({
+  memberId:id,memberName:name,amount,method,date,
+  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+ });
+ await db.collection("members").doc(id).update({
+  paid:firebase.firestore.FieldValue.increment(amount)
+ });
+}
+
+async function savePayment(){
+ const id=$("paymentMember").value;
+ const amount=Number($("paymentAmount").value);
+ const method=$("paymentMethod").value;
+ const date=$("paymentDate").value;
+ const m=members.find(x=>x.id===id);
+ if(!m||amount<=0||!date){alert("Select member and enter a valid amount and date.");return;}
+ try{
+  await addPayment(id,m.name,amount,method,date);
+  $("paymentAmount").value="";
+  await loadData();
+  alert("Payment saved!");
+ }catch(e){alert(e.message);}
+}
+
+function renderPayments(){
+ fillMemberSelect();
+ $("paymentHistory").innerHTML=payments.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""))
+ .map(p=>`<div class="member">
+ <b>${safe(p.memberName)}</b> — ${money(p.amount)}
+ <p class="small">${safe(p.date)} | ${safe(p.method)}</p>
+ </div>`).join("")||"No payments yet.";
+}
+
+function reports(){
+ const total=payments.reduce((s,p)=>s+Number(p.amount||0),0);
+ const month=payments.filter(p=>(p.date||"").startsWith(today().slice(0,7)))
+ .reduce((s,p)=>s+Number(p.amount||0),0);
+ const due=members.reduce((s,m)=>s+Math.max(0,Number(m.fee||0)-Number(m.paid||0)),0);
+ $("reportTotal").textContent=money(total);
+ $("reportMonth").textContent=money(month);
+ $("reportPending").textContent=money(due);
+ const groups={};
+ payments.forEach(p=>{
+  const key=(p.date||"").slice(0,7)||"Unknown";
+  groups[key]=(groups[key]||0)+Number(p.amount||0);
+ });
+ $("monthlyReport").innerHTML=Object.keys(groups).sort().reverse()
+ .map(k=>`<p>${safe(k)}: <b class="green">${money(groups[k])}</b></p>`).join("")||"No income records.";
+}
+
+function remind(id){
+ const m=members.find(x=>x.id===id);
+ if(!m)return;
+ const phone=(m.phone||"").replace(/\D/g,"");
+ if(!phone){alert("Add a phone number first.");return;}
+ const due=Math.max(0,Number(m.fee||0)-Number(m.paid||0));
+ const msg=`Hello ${m.name}, your Gym Record membership expires on ${m.expiryDate}. Pending fees: ${money(due)}. Please contact us for renewal.`;
+ window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+}
+
+function saveSettings(){
+ const name=$("gymName").value.trim()||"Gym Record";
+ const phone=$("gymPhone").value.trim();
+ localStorage.setItem("gymName",name);
+ localStorage.setItem("gymPhone",phone);
+ $("heading").textContent=name;
+ alert("Settings saved on this device.");
+}
+</script>
+</body>
+</html>
