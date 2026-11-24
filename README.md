@@ -53,12 +53,12 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from
 import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBK7IXBs1Ate8lokF85dlTgSwkAnLJ0qaE",
+  authDomain: "gymrecord-eb612.firebaseapp.com",
+  projectId: "gymrecord-eb612",
+  storageBucket: "gymrecord-eb612.firebasestorage.app",
+  messagingSenderId: "186206190435",
+  appId: "1:186206190435:web:c8f0ff989b6cdae60f7156"
 };
 
 const app = initializeApp(firebaseConfig);
